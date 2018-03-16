@@ -1,0 +1,16 @@
+version: '2'
+services:
+  api:
+    environment:
+      MONGODB_DATABASE: "caesarapp"
+  client:
+    environment:
+      SERVER_HTTP_PORT: "8080"
+      SERVER_HOSTNAME: "caesarapp.4xxi.com"
+      CLIENT_HTTP_PORT: "80"
+      CLIENT_HOSTNAME : "caesarapp.4xxi.com"
+      BASE_URL: "http://caesarapp.4xxi.com"
+      BASE_API_URL: "http://caesarapp.4xxi.com:8080"
+  mongodb:
+    environment:
+      MONGODB_DATABASE: "caesarapp"
