@@ -1,0 +1,68 @@
+version: '2'
+services:
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - api
+    links:
+      - api:php
+    volumes_from:
+      - config
+      - api
+    ports:
+      - 8080:80
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: config,code,api
+  api:
+    image: 4xxi/caesarapp-server
+    volumes:
+      - /var/www/app
+    depends_on:
+      - mongodb
+    labels:
+      io.rancher.container.pull_image: always
+    environment:
+      MONGODB_DATABASE: "demoapp"
+      MONGODB_HOST: "mongodb"
+      MONGODB_PORT: "27017"
+      CLIENT_ORIGIN : "*"
+      SYMFONY_ENV: prod
+  client:
+    image: 4xxi/caesarapp-web-client
+    volumes:
+      - /var/www/app
+    depends_on:
+      - api
+    ports:
+      - 80:4000
+    labels:
+      io.rancher.container.pull_image: always
+    environment:
+      SERVER_HTTP_PORT: "8080"
+      SERVER_HOSTNAME: "localhost"
+      CLIENT_HTTP_PORT: "80"
+      CLIENT_HOSTNAME : "localhost"
+      BASE_URL: "http://localhost"
+      BASE_API_URL: "http://localhost:8080"
+      SYMFONY_ENV: prod
+  config:
+    build: ./config.dockerfile
+    image: 4xxi/caesarapp-server:config
+    stdin_open: true
+    volumes:
+      - /etc/nginx
+    tty: true
+    labels:
+      io.rancher.container.pull_image: always
+  mongodb:
+    image: 4xxi/mongodb
+    volumes:
+      - db-data:/var/lib/mongodb
+    ports:
+      - "27017:27017"
+    restart: always
+    environment:
+      MONGODB_DATABASE: "demoapp"
+volumes:
+  db-data: {}
