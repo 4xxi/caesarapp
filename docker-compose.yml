@@ -1,4 +1,4 @@
-version: '2'
+version: '3.6'
 services:
   nginx:
     image: nginx:alpine
@@ -6,22 +6,25 @@ services:
       - api
     links:
       - api:php
-    volumes_from:
-      - config
-      - api
+    volumes:
+      - type: volume
+        source: config
+        target: /etc/nginx
+      - type: volume
+        source: code
+        target: /var/www/app
     ports:
       - 8080:80
-    labels:
-      io.rancher.container.pull_image: always
-      io.rancher.sidekicks: config,code,api
   api:
     image: 4xxi/caesarapp-server
     volumes:
-      - /var/www/app
+      - type: volume
+        source: code
+        target: "/var/www/app"  
     depends_on:
       - mongodb
     labels:
-      io.rancher.container.pull_image: always
+      - com.centurylinklabs.watchtower.enable=true  
     environment:
       MONGODB_DATABASE: "demoapp"
       MONGODB_HOST: "mongodb"
@@ -37,7 +40,7 @@ services:
     ports:
       - 80:4000
     labels:
-      io.rancher.container.pull_image: always
+      - com.centurylinklabs.watchtower.enable=true    
     environment:
       SERVER_HTTP_PORT: "8080"
       SERVER_HOSTNAME: "localhost"
@@ -45,24 +48,29 @@ services:
       CLIENT_HOSTNAME : "localhost"
       BASE_URL: "http://localhost"
       BASE_API_URL: "http://localhost:8080"
-      SYMFONY_ENV: prod
   config:
+    stdin_open: true
+    tty: true
     build: ./config.dockerfile
     image: 4xxi/caesarapp-server:config
-    stdin_open: true
-    volumes:
-      - /etc/nginx
-    tty: true
     labels:
-      io.rancher.container.pull_image: always
+      - com.centurylinklabs.watchtower.enable=true   
+    volumes:
+      - type: volume
+        source: config
+        target: "/etc/nginx"
   mongodb:
     image: 4xxi/mongodb
     volumes:
-      - db-data:/var/lib/mongodb
+      - type: volume
+        source: db
+        target: "/var/lib/mongodb"
     ports:
       - "27017:27017"
     restart: always
     environment:
       MONGODB_DATABASE: "demoapp"
 volumes:
-  db-data: {}
+  config: {}
+  code: {}
+  db: {}
