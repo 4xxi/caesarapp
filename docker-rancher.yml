@@ -1,0 +1,57 @@
+version: '2'
+services:
+  nginx:
+    image: nginx:alpine
+    stdin_open: true
+    tty: true
+    depends_on:
+      - php
+      - config
+    links:
+      - php
+    volumes_from:
+      - config
+      - apicode
+    ports:
+    - 8080:80/tcp
+    labels:
+      io.rancher.container.pull_image: always
+  apicode:
+    image: 4xxi/caesarapp-server:code
+    stdin_open: true
+    volumes:
+      - /var/www/app
+    tty: true
+    labels:
+      io.rancher.container.pull_image: always
+  php:
+    image: 4xxi/php-mongo:php-7.2.2-fpm-alpine3.7
+    stdin_open: true
+    tty: true
+    depends_on:
+      - apicode
+      - mongodb
+    volumes_from:
+      - apicode
+    entrypoint: /var/www/app/entrypoint.sh
+    ports:
+      - 9000:9000/tcp
+  config:
+    image: 4xxi/caesarapp:server_config
+    stdin_open: true
+    volumes:
+      - /etc/nginx
+    tty: true
+    labels:
+      io.rancher.container.pull_image: always
+  mongodb:
+    image: 4xxi/mongodb
+    volumes:
+      - db-data:/var/lib/mongodb
+    ports:
+      - "27017:27017"
+    restart: always
+    environment:
+      MONGODB_DATABASE: "caesarapp"
+volumes:
+  db-data: {}
