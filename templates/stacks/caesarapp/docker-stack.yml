@@ -1,0 +1,76 @@
+version: '3.6'
+services:
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - api
+    links:
+      - api:php
+    volumes:
+      - type: volume
+        source: config
+        target: /etc/nginx
+      - type: volume
+        source: code
+        target: /var/www/app
+    ports:
+      - 8080:80
+  api:
+    image: 4xxi/caesarapp-server
+    volumes:
+      - type: volume
+        source: code
+        target: "/var/www/app"  
+    depends_on:
+      - mongodb
+    labels:
+      - com.centurylinklabs.watchtower.enable=true  
+    environment:
+      MONGODB_DATABASE: "demoapp"
+      MONGODB_HOST: "mongodb"
+      MONGODB_PORT: "27017"
+      CLIENT_ORIGIN : "*"
+      SYMFONY_ENV: prod
+  client:
+    image: 4xxi/caesarapp-web-client
+    volumes:
+      - /var/www/app
+    depends_on:
+      - api
+    ports:
+      - 80:4000
+    labels:
+      - com.centurylinklabs.watchtower.enable=true    
+    environment:
+      SERVER_HTTP_PORT: "8080"
+      SERVER_HOSTNAME: "localhost"
+      CLIENT_HTTP_PORT: "80"
+      CLIENT_HOSTNAME : "localhost"
+      BASE_URL: "http://localhost"
+      BASE_API_URL: "http://localhost:8080"
+  config:
+    stdin_open: true
+    tty: true
+    build: ./config.dockerfile
+    image: 4xxi/caesarapp-server:config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true   
+    volumes:
+      - type: volume
+        source: config
+        target: "/etc/nginx"
+  mongodb:
+    image: 4xxi/mongodb
+    volumes:
+      - type: volume
+        source: db
+        target: "/var/lib/mongodb"
+    ports:
+      - "27017:27017"
+    restart: always
+    environment:
+      MONGODB_DATABASE: "demoapp"
+volumes:
+  config: {}
+  code: {}
+  db: {}
