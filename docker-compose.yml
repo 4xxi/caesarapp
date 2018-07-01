@@ -20,13 +20,12 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
     traefik:
         image: traefik:1.6.2-alpine # The official Traefik docker image
-        command: --api --docker # Enables the web UI and tells Træfik to listen to docker
+        command: --web --docker # Enables the web UI and tells Træfik to listen to docker
         networks:
             - frontend
             - backend
         ports:
             - "80:80"     # The HTTP port
-            - "8080:8080" # The Web UI (enabled by --api)
         depends_on:
             - config_traefik
         volumes:
@@ -47,7 +46,6 @@ services:
             - "traefik.frontend.rule=Host:${CLIENT_HOSTNAME}"
             - "traefik.frontend.entryPoints=http,https"
             - "com.centurylinklabs.watchtower.enable=true"
-            #- "traefik.frontend.auth.basic=test:$$apr1$$RFHtSHCh$$U.hH1go4eOSAmrs4qNWxO1"
         environment:
             SERVER_HTTP_PORT: "${SERVER_HTTP_PORT}"
             SERVER_HOSTNAME: "${SERVER_HOSTNAME}"
@@ -90,7 +88,7 @@ services:
         labels:
             - "traefik.domain=${DOMAIN}"
             - "traefik.frontend.rule=Host:${SERVER_HOSTNAME}"
-            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.entryPoints=http,https"
             - "traefik.enable=true"             
     redis:
         image: 'redis:alpine'
