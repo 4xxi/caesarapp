@@ -1,0 +1,8 @@
+version: '3.2'
+
+services:
+    traefik:
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./configs/acme.json:/etc/traefik/acme.json'
+            - ./configs/traefik.toml:/etc/traefik/traefik.toml'
