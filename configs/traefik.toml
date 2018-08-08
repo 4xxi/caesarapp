@@ -1,7 +1,10 @@
 defaultEntryPoints = ["http", "https"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -17,3 +20,4 @@ entryPoint = "https"
 [[acme.domains]]
   main = "caesarapp.io"
   sans = ["app.caesarapp.io", "api.caesarapp.io"]
+  

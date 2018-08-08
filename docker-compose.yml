@@ -2,7 +2,7 @@ version: '3.2'
 
 services:
     config_traefik:
-        build: 
+        build:
             context: ./configs
             dockerfile: traefik.dockerfile
         stdin_open: true
@@ -20,25 +20,27 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
     traefik:
         image: traefik:1.6.2-alpine # The official Traefik docker image
-        command: --web --docker # Enables the web UI and tells Træfik to listen to docker
+        command: --api --docker # Enables the web UI and tells Træfik to listen to docker
         networks:
             - frontend
             - backend
         ports:
             - "80:80"     # The HTTP port
+            - "8080:8080" # The Web UI (enabled by --api)
+            - "443:443"
         depends_on:
             - config_traefik
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - 'config_traefik:/etc/traefik/'
-        labels:                                                                                                                 
-            - traefik.port=8080                                                                                                                                                                       
+        labels:
+            - traefik.port=8080
     client:
         image: 4xxi/caesarapp-web-client
         depends_on:
             - php
         networks:
-            - frontend  
+            - frontend
         labels:
             - "traefik.enable=true"
             - "traefik.backend=client"
@@ -65,15 +67,15 @@ services:
             - "9000"
         entrypoint: ./config/docker/docker-entrypoint.sh
         environment:
-            - APP_ENV=${ENV}  
+            - APP_ENV=${ENV}
             - REDIS_HOST=redis
             - CORS_ALLOW_ORIGIN=${CLIENT_HOSTNAME}
             - REDIS_PORT=${REDIS_PORT}
         labels:
             - "traefik.enable=false"
             - "com.centurylinklabs.watchtower.enable=true"
-        networks: 
-            - backend  
+        networks:
+            - backend
     nginx:
         image: 4xxi/nginx:flex
         depends_on:
@@ -83,25 +85,25 @@ services:
               source: code
               target: "/var/www/html"
             - 'logs:/var/log/nginx'
-        networks: 
-            - backend     
+        networks:
+            - backend
         labels:
             - "traefik.domain=${DOMAIN}"
-            - "traefik.frontend.rule=Host:${SERVER_HOSTNAME}"
+            - "traefik.frontend.rule=PathPrefix:/api/*"
             - "traefik.frontend.entryPoints=http,https"
-            - "traefik.enable=true"             
+            - "traefik.enable=true"
     redis:
         image: 'redis:alpine'
         environment:
           - REDIS_PORT=${REDIS_PORT}
           - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-        networks: 
-          - backend    
+        networks:
+          - backend
         volumes:
           - 'redis:/etc/redis/database/caesarapp'
-        labels: 
-            - "traefik.enable=false"  
-networks: 
+        labels:
+            - "traefik.enable=false"
+networks:
     backend:
     frontend:
 volumes:
